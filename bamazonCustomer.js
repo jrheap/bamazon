@@ -42,6 +42,16 @@ con.query('SELECT * FROM products', function (err, res) {
                     });
                     
                 }
+            },
+            {
+                type: 'input',
+                message: 'How many ' + inventory.item.product_name + 's would you like to buy? ',
+                name:'amountBuy',
+                choices: function () {
+                    return inventory.map(function(item){
+                        return item.product_name
+                    })
+                  }
             }
         ]).then(function (choice){
             console.log("This is running", parseInt(choice.idBuy) )
