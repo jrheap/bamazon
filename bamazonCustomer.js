@@ -1,7 +1,7 @@
 var mysql = require('mysql');
-const cTable = require('console.table');
+var cTable = require('console.table');
 var inquirer = require('inquirer');
-var con= mysql.createConnection({
+var con = mysql.createConnection({
     host: "localhost",
     //   local port
     port: 3306,
@@ -11,30 +11,37 @@ var con= mysql.createConnection({
 
     // Your password
     password: "Royall14",
+    
     database: "bamazon"
 });
-
+// this is connecting to the server
 con.connect(function (err, res) {
     if (err) throw err;
     
 
 });
-
+// This section of code runs the data from the DB 
 con.query('SELECT * FROM products', function (err, res) {
     if (err) {
+        // what should it console.log if it throws an error
         console.log('error in query: ' + err.stack);
     };
-    inventory = res;
+    // this stores ALL the response from the database into the inventory valarible 
+    var inventory = res;
+    // This is creating new lines seperated by ----------------------
     console.log('\n---------------------------------------------------------------------\n')
     console.table(inventory);
+    // console.log(inventory);
     
     runQ();
     function runQ() {
+        // The start of the Inquirer NPM
         inquirer.prompt([
             {
                 type: 'list',
                 message: 'Which item would you like to purchase? ',
                 name: 'idBuy',
+                // the function lets you choose what item to buy
                 choices: function(){
                     return inventory.map(function(item){
                         return "" + item.id + " " + item.product_name + ' ' +  "$" + item.price
@@ -42,23 +49,53 @@ con.query('SELECT * FROM products', function (err, res) {
                     });
                     
                 }
-            },
-            {
-                type: 'input',
-                message: 'How many ' + inventory.item.product_name + 's would you like to buy? ',
-                name:'amountBuy',
-                choices: function () {
-                    return inventory.map(function(item){
-                        return item.product_name
-                    })
-                  }
             }
-        ]).then(function (choice){
-            console.log("This is running", parseInt(choice.idBuy) )
-            
-            con.end();
+        ]).then(function (item){
+            var itemId = parseInt(item.idBuy.slice(0, 1))
+            // console.log(itemId, 'this is item id');
+
+            // console.log(item);
+             inquirer.prompt([{
+                     type: 'input',
+                     message: 'How many ' + item.idBuy + 's would you like to buy? There is ' + getChosenItemQty(item) + ' in stock',
+                     name: 'amountBuy'
+                 }]).then(function (amount) {
+                    console.log(amount.amountBuy);
+                    //if the ammount the user chose is less then the amount we have in stock
+                    console.log(inventory[itemId -1].stock_quanity);
+                    if (parseInt(amount.amountBuy) > inventory[itemId-1].stock_quanity) {
+                        //show nice msg saying we do not have enough of that item
+                        console.log("We apologize for the inconvience but we dont have enough stock to fulfil your order");
+                        con.end();
+                    }else{
+                        //sebtract the stock wantity from the amount they wanted to buy
+                        var newStockQty = (inventory[itemId - 1].stock_quanity - (parseInt(amount.amountBuy)));
+                        //we then need to go update our database to reflect that change
+                        console.log(newStockQty, "this is the new stock quantity");
+                        //else process the transaction
+                        con.query('UPDATE products SET stock_quanity = ? WHERE id = ?', [newStockQty, itemId], function (err, updatedData) {
+                            
+                    
+
+                            con.end();
+                        })
+
+                    }
+             })
+
+            //get the chosen item that the user selected
+            function getChosenItemQty(item){
+                //get the item id out of the string
+                var stock_quanity = 0;
+                var id = parseInt(item.idBuy.slice(0, 1))
+                for(var i = 0; i < inventory.length; i++){
+                    //get the items object
+                    if(inventory[i].id == id){
+                        stock_quanity = inventory[i].stock_quanity;
+                    }
+                }
+                return stock_quanity;
+            }
         });
     };
 });
-
-

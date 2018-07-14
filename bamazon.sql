@@ -25,7 +25,7 @@ insert into products (id, product_name, department_name, price, stock_quanity)
 value (3, 'Soda Pop', 'Grocery', 1, 1000);
 
 insert into products (id, product_name, department_name, price, stock_quanity)
-value (4, 'Rocky Chair', 'Living', 200, 50);
+value (4, 'Rocking Chair', 'Living', 200, 50);
 
 insert into products (id, product_name, department_name, price, stock_quanity)
 value (5, 'Basketball', 'Sports', 30, 45);
